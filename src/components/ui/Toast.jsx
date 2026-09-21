@@ -1,0 +1,60 @@
+import { createContext, useCallback, useContext, useRef, useState } from 'react'
+import { CheckCircle2, AlertTriangle, Info, X } from 'lucide-react'
+
+const ToastContext = createContext(null)
+
+const STYLES = {
+  success: { icon: <CheckCircle2 size={18} />, accent: 'text-emerald-600', ring: 'ring-emerald-200' },
+  error: { icon: <AlertTriangle size={18} />, accent: 'text-rose-600', ring: 'ring-rose-200' },
+  info: { icon: <Info size={18} />, accent: 'text-slate-600', ring: 'ring-slate-200' },
+}
+
+export function ToastProvider({ children }) {
+  const [toasts, setToasts] = useState([])
+  const idRef = useRef(0)
+
+  const dismiss = useCallback((id) => {
+    setToasts((t) => t.filter((x) => x.id !== id))
+  }, [])
+
+  const toast = useCallback(
+    (message, type = 'success') => {
+      const id = ++idRef.current
+      setToasts((t) => [...t, { id, message, type }])
+      setTimeout(() => dismiss(id), 3600)
+    },
+    [dismiss],
+  )
+
+  return (
+    <ToastContext.Provider value={toast}>
+      {children}
+      <div className="fixed bottom-24 left-1/2 z-[60] flex w-full max-w-sm -translate-x-1/2 flex-col gap-2 px-4 sm:bottom-6">
+        {toasts.map((t) => {
+          const s = STYLES[t.type]
+          return (
+            <div
+              key={t.id}
+              role="status"
+              className={`flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-lg ring-1 ${s.ring} animate-[slideUp_.2s_ease]`}
+            >
+              <span className={s.accent}>{s.icon}</span>
+              <p className="flex-1 text-sm font-medium text-slate-700">{t.message}</p>
+              <button
+                onClick={() => dismiss(t.id)}
+                className="text-slate-300 hover:text-slate-500 transition cursor-pointer"
+                aria-label="Dismiss"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </ToastContext.Provider>
+  )
+}
+
+export function useToast() {
+  return useContext(ToastContext)
+}
