@@ -14,6 +14,34 @@ Google account. Total cost: **$0**. Needs about **5 minutes**.
 
 ---
 
+## ⚡ Fastest way — one command does everything
+
+The GitHub CLI is already installed on this machine, and a publisher script is
+included. It signs you in, creates the repository, pushes your code, and switches
+on GitHub Pages.
+
+**Option A — double-click:**
+
+Open the `scripts` folder and double-click **`Publish-to-GitHub.cmd`**.
+
+**Option B — one command:**
+
+```powershell
+cd "c:\Users\amiri\OneDrive\Desktop\PFT"
+powershell -ExecutionPolicy Bypass -File scripts\publish-to-github.ps1
+```
+
+The first time, your browser opens and asks you to authorize GitHub. Approve it, come
+back to the terminal, and the script finishes on its own. When it is done it prints
+your live link.
+
+**Then do Step 4 below** — allowing your new address in Firebase. That one step is
+required for Google sign-in and only takes a moment.
+
+If you would rather do it by hand, keep reading.
+
+---
+
 ## Step 1 — Create the repository on GitHub
 
 1. Go to **https://github.com/new**

@@ -80,7 +80,17 @@ Open http://localhost:5173 and sign in with Google.
 
 Full walkthrough → **[docs/DEPLOY_GITHUB.md](docs/DEPLOY_GITHUB.md)** (about 5 minutes).
 
-The short version:
+The short version — **one command** (GitHub CLI is already installed, and a publisher
+script is included):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\publish-to-github.ps1
+```
+
+Or double-click **`scripts\Publish-to-GitHub.cmd`**. It signs you in, creates the repo,
+pushes, and enables GitHub Pages, then prints your live link.
+
+Doing it by hand instead:
 
 ```bash
 git remote add origin https://github.com/YOUR-USERNAME/pft.git
