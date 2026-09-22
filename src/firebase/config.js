@@ -19,12 +19,12 @@
 // ============================================================
 
 const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY",
-  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
-  projectId: "PASTE_YOUR_PROJECT_ID",
-  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
-  messagingSenderId: "PASTE_YOUR_SENDER_ID",
-  appId: "PASTE_YOUR_APP_ID",
+  apiKey: "AIzaSyD4I2LEvS4CZrmad0dMFdDCHCfxde2S9RI",
+  authDomain: "pft-t-80b51.firebaseapp.com",
+  projectId: "pft-t-80b51",
+  storageBucket: "pft-t-80b51.firebasestorage.app",
+  messagingSenderId: "817356521725",
+  appId: "1:817356521725:web:79778ac3fb36f52412be94"
 }
 
 export default firebaseConfig

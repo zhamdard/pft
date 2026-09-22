@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { UserProvider, useUser } from './context/UserContext'
+import { DataHealthProvider } from './context/DataHealthContext'
 import { ToastProvider } from './components/ui/Toast'
 import { Spinner } from './components/ui/Primitives'
 import { Brand } from './components/layout/Brand'
+import DataHealthBanner from './components/DataHealthBanner'
 import Sidebar from './components/layout/Sidebar'
 import MobileNav from './components/layout/MobileNav'
 import { TopBar } from './components/layout/TopBar'
@@ -42,6 +44,7 @@ function Shell() {
       <div className="pb-24 lg:pb-10">
         <TopBar view={view} />
         <main className="mx-auto max-w-6xl px-4 py-6 lg:px-8">
+          <DataHealthBanner onOpenSettings={() => setView('settings')} />
           {view === 'dashboard' && (
             <Dashboard
               transactions={transactions}
@@ -55,7 +58,7 @@ function Shell() {
             <Transactions transactions={transactions} openAdd={openAdd} openEdit={openEdit} />
           )}
           {view === 'budgets' && <Budgets transactions={transactions} />}
-          {view === 'settings' && <Settings />}
+          {view === 'settings' && <Settings transactions={transactions} />}
         </main>
       </div>
 
@@ -79,9 +82,13 @@ function AppInner() {
 export default function App() {
   return (
     <ToastProvider>
-      <UserProvider>
-        <AppInner />
-      </UserProvider>
+      {/* Data-health sits above the user context so auth itself can report
+          Firestore problems (for example, settings that can't be created). */}
+      <DataHealthProvider>
+        <UserProvider>
+          <AppInner />
+        </UserProvider>
+      </DataHealthProvider>
     </ToastProvider>
   )
 }
