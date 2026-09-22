@@ -26,11 +26,17 @@ export function describeAuthError(err) {
     },
     'auth/unauthorized-domain': {
       title: 'This address isn’t allowed for Google sign-in',
-      detail: 'Google only returns sign-ins to domains you’ve approved.',
+      detail:
+        'Google only returns sign-ins to domains you have approved. If you just published the app '
+        + '(for example to GitHub Pages), its address still needs to be added to your Firebase '
+        + 'project — that is a one-time step.',
       steps: [
-        'For testing, open the app at http://localhost:5173 (localhost is pre-approved).',
-        'For a live site: Firebase console → Authentication → Settings → '
-          + 'Authorized domains → add your domain.',
+        'Copy this site’s address from your browser bar (for GitHub Pages it looks like '
+          + '“your-username.github.io”).',
+        'Open the Firebase console → Authentication → Settings → “Authorized domains”.',
+        'Click “Add domain”, paste that address (no “https://”, no trailing slash), and save.',
+        'Come back here, refresh, and sign in again.',
+        'Testing locally instead? http://localhost is already approved by default.',
       ],
     },
     'auth/operation-not-allowed': {

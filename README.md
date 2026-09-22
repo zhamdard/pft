@@ -74,15 +74,42 @@ Open http://localhost:5173 and sign in with Google.
 >
 > When deployed, add your domain to Firebase → Authentication → Settings → **Authorized domains**.
 
-### 4. Optional: deploy with Firebase Hosting
+### 4. Deploy so you can use it anywhere 🚀
+
+**Recommended: GitHub Pages — free, HTTPS, and redeploys on every push.**
+
+Full walkthrough → **[docs/DEPLOY_GITHUB.md](docs/DEPLOY_GITHUB.md)** (about 5 minutes).
+
+The short version:
+
+```bash
+git remote add origin https://github.com/YOUR-USERNAME/pft.git
+git push -u origin main
+```
+
+Then on GitHub: **Settings → Pages → Source = GitHub Actions**.
+
+Your app goes live at `https://YOUR-USERNAME.github.io/pft/`.
+
+> ⚠️ **One required step after deploying:** add `YOUR-USERNAME.github.io` to
+> Firebase → Authentication → Settings → **Authorized domains**, or Google will refuse
+> to sign you in on the live site. `localhost` is pre-approved; your live domain is not.
+
+The included workflow (`.github/workflows/deploy.yml`) runs the tests and builds the app
+on every push to `main`, so updates ship automatically.
+
+**Alternative: Firebase Hosting** (also free, and its domain is pre-authorized for sign-in):
 
 ```bash
 npm install -g firebase-tools
 firebase login
-# set your project id in .firebaserc (or run: firebase use --add)
+firebase use --add          # pick your project
 npm run build
 firebase deploy
 ```
+
+> **Works from any path.** The build uses relative asset paths (`base: './'`), so it runs
+> correctly from a GitHub Pages subpath, a custom domain, or the domain root.
 
 ---
 
