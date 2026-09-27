@@ -10,6 +10,8 @@ import { test } from 'node:test'
 import { sortByDateDesc, tsMillis } from '../src/utils/sort.js'
 import { describeAuthError } from '../src/utils/authErrors.js'
 import { describeFirestoreError, summariseError } from '../src/utils/firestoreErrors.js'
+import { monthInsights } from '../src/utils/stats.js'
+import { balanceBefore, monthHistory, withRunningBalance } from '../src/utils/history.js'
 
 /* ------------------------------------------------------------------ */
 /* Sorting — must equal what the old Firestore double-orderBy did      */
@@ -142,4 +144,99 @@ test('unknown auth errors fall back to something readable', () => {
   const generic = describeAuthError(new Error('plain error'))
   assert.ok(generic.title)
   assert.ok(generic.detail)
+})
+
+/* ------------------------------------------------------------------ */
+/* Dashboard maths — the numbers people act on                        */
+/* ------------------------------------------------------------------ */
+
+const SAMPLE = [
+  { id: 'mar-pay', date: '2026-03-05', type: 'income', category: 'salary', amount: 3000 },
+  { id: 'mar-rent', date: '2026-03-07', type: 'expense', category: 'rent', amount: 1200 },
+  { id: 'mar-food', date: '2026-03-20', type: 'expense', category: 'food', amount: 450 },
+  { id: 'feb-pay', date: '2026-02-10', type: 'income', category: 'salary', amount: 2000 },
+  { id: 'feb-rent', date: '2026-02-11', type: 'expense', category: 'rent', amount: 1000 },
+]
+
+test('monthInsights totals the month and compares it with the one before', () => {
+  const i = monthInsights(SAMPLE, '2026-03', '2026-02')
+  assert.equal(i.income, 3000)
+  assert.equal(i.expense, 1650)
+  assert.equal(i.net, 1350)
+  assert.equal(i.entries, 3)
+  assert.equal(i.savingsRate, 45) // 1350 / 3000
+  assert.equal(i.incomeChange, 50) // 2000 -> 3000
+  assert.equal(i.expenseChange, 65) // 1000 -> 1650
+  assert.equal(i.previous.income, 2000)
+})
+
+test('monthInsights picks the biggest expense, ignoring income and other months', () => {
+  const noise = [
+    { id: 'huge-income', date: '2026-03-01', type: 'income', category: 'salary', amount: 99999 },
+    { id: 'undated', type: 'expense', amount: 88888 },
+    { id: 'other-month', date: '2026-01-02', type: 'expense', amount: 77777 },
+    { id: 'real', date: '2026-03-02', type: 'expense', category: 'food', amount: 20 },
+  ]
+  const i = monthInsights(noise, '2026-03')
+  assert.equal(i.largestExpense.id, 'real')
+  assert.equal(i.entries, 2) // the undated row and the January row are excluded
+  assert.equal(i.previous, null)
+  assert.equal(i.incomeChange, null) // nothing to compare against
+  assert.equal(i.savingsRate, 100)
+})
+
+test('monthInsights treats spending that appeared from nothing as a rise', () => {
+  const i = monthInsights([{ date: '2026-03-01', type: 'expense', amount: 30 }], '2026-03', '2026-02')
+  assert.equal(i.expenseChange, 100)
+  assert.equal(i.incomeChange, null) // no income either month: not a percentage
+  assert.equal(i.savingsRate, null) // no income means no rate
+})
+
+test('monthInsights survives an empty ledger', () => {
+  const i = monthInsights([], '2026-03', '2026-02')
+  assert.equal(i.income, 0)
+  assert.equal(i.expense, 0)
+  assert.equal(i.net, 0)
+  assert.equal(i.entries, 0)
+  assert.equal(i.largestExpense, null)
+  assert.equal(i.savingsRate, null)
+  assert.equal(i.expenseChange, null)
+})
+
+test('the running balance walks each month net up and down', () => {
+  const rows = [
+    { key: '2026-01', net: 100 },
+    { key: '2026-02', net: -40 },
+    { key: '2026-03', net: 10 },
+  ]
+  assert.deepEqual(
+    withRunningBalance(rows, 500).map((r) => r.running),
+    [600, 560, 570],
+  )
+})
+
+test('balanceBefore adds up everything older than the window', () => {
+  const older = [
+    { date: '2025-11-01', type: 'income', amount: 1000 },
+    { date: '2025-12-01', type: 'expense', amount: 250 },
+    { date: '2026-01-01', type: 'income', amount: 999 }, // inside the window
+    { type: 'expense', amount: 50 }, // undated — must not be counted
+  ]
+  assert.equal(balanceBefore(older, '2026-01'), 750)
+})
+
+test('monthHistory describes each month of the window', () => {
+  const rows = monthHistory(SAMPLE, 12, '2026-03')
+  assert.equal(rows.length, 12)
+  const march = rows[rows.length - 1]
+  assert.equal(march.key, '2026-03')
+  assert.equal(march.income, 3000)
+  assert.equal(march.expense, 1650)
+  assert.equal(march.entries, 3)
+  assert.equal(march.topCategory, 'rent')
+  assert.equal(march.topAmount, 1200)
+  assert.equal(march.savingsRate, 45)
+  // Oldest month first, and months with no activity are still present.
+  assert.equal(rows[0].key, '2025-04')
+  assert.equal(rows[0].entries, 0)
 })

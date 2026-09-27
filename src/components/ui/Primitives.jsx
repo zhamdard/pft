@@ -1,4 +1,6 @@
 import { forwardRef } from 'react'
+import Modal from './Modal'
+
 
 /* ------------------------------------------------------------------ */
 /* Button                                                              */
@@ -111,8 +113,57 @@ export function EmptyState({ icon, title, description, action }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Segmented control (used for Expense / Income toggle)                */
+/* Confirm dialog (destructive actions: delete, replace, clear)         */
 /* ------------------------------------------------------------------ */
+
+const CONFIRM_TONES = {
+  danger: 'danger',
+  default: 'primary',
+}
+
+/**
+ * Small yes/no modal built on Modal, so every confirmation in the app words
+ * itself the same way. Used before anything irreversible happens.
+ */
+export function ConfirmDialog({
+  open,
+  title,
+  description,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  tone = 'danger',
+  busy = false,
+  onCancel,
+  onConfirm,
+}) {
+  return (
+    <Modal
+      open={open}
+      onClose={onCancel}
+      title={title}
+      size="sm"
+      footer={
+        <>
+          <Button variant="secondary" size="sm" onClick={onCancel} disabled={busy}>
+            {cancelLabel}
+          </Button>
+          <Button
+            variant={CONFIRM_TONES[tone] || 'primary'}
+            size="sm"
+            onClick={onConfirm}
+            disabled={busy}
+          >
+            {busy && <Spinner size={15} />}
+            {confirmLabel}
+          </Button>
+        </>
+      }
+    >
+      <p className="text-sm leading-relaxed text-slate-600">{description}</p>
+    </Modal>
+  )
+}
+
 
 export function Segmented({ options, value, onChange, className = '' }) {
   return (

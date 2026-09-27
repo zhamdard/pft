@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import { UserProvider, useUser } from './context/UserContext'
 import { DataHealthProvider } from './context/DataHealthContext'
 import { ToastProvider } from './components/ui/Toast'
@@ -14,9 +14,31 @@ import { DEFAULT_VIEW } from './components/layout/appNav'
 import { useTransactions } from './hooks/useTransactions'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
-import Transactions from './pages/Transactions'
-import Budgets from './pages/Budgets'
-import Settings from './pages/Settings'
+
+/*
+ * Everything except the two screens you land on is loaded on demand.
+ *
+ * The Data Studio alone pulls in the Excel library, which is several hundred
+ * kilobytes that nobody needs while checking their balance on a phone. Splitting
+ * these out keeps the first paint small; the chunks download the moment you tap
+ * the section, and Vite caches them after that.
+ */
+const Transactions = lazy(() => import('./pages/Transactions'))
+const History = lazy(() => import('./pages/History'))
+const Earnings = lazy(() => import('./pages/Earnings'))
+const Budgets = lazy(() => import('./pages/Budgets'))
+const DataStudio = lazy(() => import('./pages/DataStudio'))
+const Settings = lazy(() => import('./pages/Settings'))
+
+/** Placeholder while a lazily-loaded section is on its way. */
+function PageLoading() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <Spinner className="text-slate-300" size={28} />
+    </div>
+  )
+}
+
 
 function Splash() {
   return (
@@ -45,6 +67,8 @@ function Shell() {
         <TopBar view={view} />
         <main className="mx-auto max-w-6xl px-4 py-6 lg:px-8">
           <DataHealthBanner onOpenSettings={() => setView('settings')} />
+
+          {/* Eager: the landing screen, so the first paint is instant. */}
           {view === 'dashboard' && (
             <Dashboard
               transactions={transactions}
@@ -54,11 +78,25 @@ function Shell() {
               setView={setView}
             />
           )}
-          {view === 'transactions' && (
-            <Transactions transactions={transactions} openAdd={openAdd} openEdit={openEdit} />
-          )}
-          {view === 'budgets' && <Budgets transactions={transactions} />}
-          {view === 'settings' && <Settings transactions={transactions} />}
+
+          {/* Lazy: the rest, fetched on the first tap. */}
+          <Suspense fallback={<PageLoading />}>
+            {view === 'transactions' && (
+              <Transactions transactions={transactions} openAdd={openAdd} openEdit={openEdit} />
+            )}
+            {view === 'history' && (
+              <History
+                transactions={transactions}
+                loading={loading}
+                setView={setView}
+                openAdd={openAdd}
+              />
+            )}
+            {view === 'earnings' && <Earnings transactions={transactions} loading={loading} />}
+            {view === 'budgets' && <Budgets transactions={transactions} />}
+            {view === 'data' && <DataStudio transactions={transactions} />}
+            {view === 'settings' && <Settings transactions={transactions} />}
+          </Suspense>
         </main>
       </div>
 

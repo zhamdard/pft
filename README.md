@@ -11,16 +11,26 @@ Sign in with your **Google account** — every entry is saved securely to your o
 ## ✨ Features
 
 - 🔐 **Google sign-in** — one tap, no passwords, fully private to your account
-- 📊 **Dashboard** — monthly income, expenses, net saved & savings rate
-- 📈 **Cash-flow chart** — income vs expenses over the last 6 months
-- 🍩 **Spending breakdown** — where your money goes, by category
+- 🏦 **Banking-style dashboard** — one big balance, quick actions, a 12-month money strip and a payday countdown
+- 💵 **Pay however you get paid** — monthly, twice a month, every 2 weeks, weekly, per day, per hour or irregular
+- 📅 **Payday forecasting** — the next payday counted down, and received vs expected for the month
 - ➕ **Transactions** — add / edit / delete income & expense entries
 - 🔎 **Search & filters** — by category, type, month, and keyword
+- 📈 **History** — a 12-month ledger with a running balance that climbs and falls as you scroll
+- 🍩 **Spending breakdown** — where your money goes, by category
 - 🎯 **Budgets** — set monthly limits per category with progress bars
-- 🏦 **Currency** — 24 currencies, applied everywhere
-- 💾 **Export** — download your data as JSON anytime
+- 📤 **Export** — Excel (.xlsx), CSV, Word (.doc) and JSON backup, for any date range
+- 📥 **Import & sync** — merge an edited spreadsheet back in, with preview, undo and duplicate detection
+- 🤝 **Sharing** — the native share sheet on mobile, a copyable summary on desktop
+- 💱 **Currency** — 24 currencies, applied everywhere
+- 🙈 **Privacy** — hide every amount with one tap, synced to your account
 - 📱 **Responsive** — sidebar on desktop, bottom nav + quick-add on mobile
 - ☁️ **Cloud-backed** — real‑time sync, accessible on any device
+
+
+> Full feature guide, including pay rhythms, export/import round trips and sharing →
+> **[docs/FEATURES.md](docs/FEATURES.md)**
+
 
 ---
 
@@ -33,6 +43,7 @@ Sign in with your **Google account** — every entry is saved securely to your o
 | Charts     | Recharts 3                            |
 | Icons      | lucide-react                          |
 | Auth       | Firebase Authentication (Google)      |
+| Spreadsheets | SheetJS (xlsx) — loaded only when you open Data studio |
 | Database   | Cloud Firestore (Google Cloud)        |
 | Hosting    | Firebase Hosting / any static host    |
 
@@ -126,7 +137,7 @@ firebase deploy
 ## ✅ Verifying your setup
 
 ```bash
-npm test        # 16 logic tests (sorting + error messages)
+npm test        # 23 logic tests (sorting, history maths, error messages)
 npm run build   # production build must finish without errors
 ```
 
@@ -142,22 +153,27 @@ Then, inside the running app:
 
 ```
 src/
-├─ main.jsx / App.jsx        # entry + app shell + routing (state-based)
-├─ firebase/config.js        # <-- paste your Firebase config here
-├─ firebase/firebase.js      # Firebase init + re-exported helpers
-├─ context/UserContext.jsx   # auth + user preferences (currency)
-├─ context/DataHealthContext.jsx  # surfaces Firestore read failures to the UI
-├─ services/                 # Firestore CRUD + connection diagnostics
-├─ hooks/                    # live-subscription React hooks
-├─ utils/                    # date, money, statistics, sorting, error messages
-├─ data/                     # category definitions
-├─ components/
-│  ├─ ui/                    # design system (buttons, cards, form, modal, toast, alert)
-│  ├─ layout/                # sidebar, mobile nav, top bar
-│  ├─ charts/                # cash-flow & donut charts
-│  ├─ DataHealthBanner.jsx   # explains (and fixes) database access problems
-│  └─ dashboard/             # stat cards, recent list, budget progress
-└─ pages/                    # Login, Dashboard, Transactions, Budgets, Settings
+├── main.jsx / App.jsx        # entry + app shell + routing (state-based)
+├── firebase/config.js        # <-- paste your Firebase config here
+├── firebase/firebase.js      # Firebase init + re-exported helpers
+├── context/UserContext.jsx   # auth + user preferences (currency, privacy)
+├── context/DataHealthContext.jsx  # surfaces Firestore read failures to the UI
+├── services/                 # Firestore CRUD + connection diagnostics
+├── hooks/                    # live-subscription React hooks + income sources
+├── utils/
+│   ├── money.js / date.js    # currency + date helpers
+│   ├── stats.js / history.js # month totals, insights, 12-month trail
+│   ├── earnings.js           # pay schedules & income projection
+│   └── dataTransfer.js       # Excel / CSV / Word / JSON import & export
+├── data/                     # category definitions
+├── components/
+│   ├── ui/                   # design system (buttons, cards, form, modal, toast)
+│   ├── layout/               # sidebar, mobile nav, top bar
+│   ├── charts/               # cash-flow & donut charts
+│   ├── DataHealthBanner.jsx  # explains (and fixes) database access problems
+│   └── dashboard/            # balance hero, history strip, payday card, quick actions
+└── pages/                    # Login, Dashboard, Transactions, History, Pay & income,
+                              #   Budgets, Data studio, Settings
 ```
 
 ---

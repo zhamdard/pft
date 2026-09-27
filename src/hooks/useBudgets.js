@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { listenBudgets } from '../services/budgets'
+import { listenBudgets, listenAllBudgets } from '../services/budgets'
 import { useDataHealth } from '../context/DataHealthContext'
 
 /**
@@ -31,6 +31,27 @@ export function useBudgets(uid, monthKey) {
     })
     return unsub
   }, [uid, monthKey, reportError, retryToken])
+
+  return state
+}
+
+/**
+ * Every budget across every month — used by the Data Studio so a backup is
+ * genuinely complete rather than just "the month you happened to be on".
+ */
+export function useAllBudgets(uid) {
+  const [state, setState] = useState({ loading: true, budgets: [] })
+
+  useEffect(() => {
+    if (!uid) {
+      setState({ loading: false, budgets: [] })
+      return undefined
+    }
+
+    setState((s) => ({ ...s, loading: true }))
+    const unsub = listenAllBudgets(uid, (budgets) => setState({ loading: false, budgets }))
+    return unsub
+  }, [uid])
 
   return state
 }

@@ -1,19 +1,29 @@
 import { useMemo, useState } from 'react'
-import { Sparkles, ArrowRight, Target } from 'lucide-react'
-import { Card, EmptyState, Spinner, Button } from '../components/ui/Primitives'
+import { ArrowRight, Plus, Sparkles, Target } from 'lucide-react'
+import { Button, Card, EmptyState, Spinner } from '../components/ui/Primitives'
+import BalanceHero from '../components/dashboard/BalanceHero'
+import QuickActions from '../components/dashboard/QuickActions'
+import HistoryStrip from '../components/dashboard/HistoryStrip'
+import PaydayCard from '../components/dashboard/PaydayCard'
 import StatCard from '../components/dashboard/StatCard'
 import MonthSwitch from '../components/MonthSwitch'
 import CashflowChart from '../components/charts/CashflowChart'
 import CategoryDonut from '../components/charts/CategoryDonut'
 import BudgetProgress from '../components/dashboard/BudgetProgress'
 import RecentList from '../components/dashboard/RecentList'
-import { monthTotals, allTimeTotals, categoryAgg, cashflowSeries } from '../utils/stats'
-import { thisMonthKey } from '../utils/date'
-import { formatMoney, percent } from '../utils/money'
+import { allTimeTotals, cashflowSeries, categoryAgg, monthInsights } from '../utils/stats'
+import { balanceBefore, monthHistory, withRunningBalance } from '../utils/history'
+import { daysInMonth, projectedIncome } from '../utils/earnings'
+import { formatMonthKey, shiftMonth, thisMonthKey } from '../utils/date'
+import { formatMoney } from '../utils/money'
 import { getCategory } from '../data/categories'
 import { useUser } from '../context/UserContext'
 import { useBudgets } from '../hooks/useBudgets'
-import { Plus } from 'lucide-react'
+import { useIncomeSources } from '../hooks/useIncomeSources'
+import { useHiddenAmounts } from '../hooks/useHiddenAmounts'
+
+/** How many months the history strip shows. */
+const HISTORY_MONTHS = 12
 
 function greeting() {
   const h = new Date().getHours()
@@ -22,20 +32,44 @@ function greeting() {
   return 'Good evening'
 }
 
+/** "+12%" / "−8%" / "—" */
+function signedPercent(value) {
+  if (value === null || value === undefined) return '—'
+  return `${value > 0 ? '+' : value < 0 ? '−' : ''}${Math.abs(value)}%`
+}
+
 export default function Dashboard({ transactions, loading, openAdd, openEdit, setView }) {
   const { user, currency } = useUser()
   const [monthKey, setMonthKey] = useState(thisMonthKey())
+  const { hidden, toggle } = useHiddenAmounts()
 
   const { budgets } = useBudgets(user?.uid, monthKey)
+  const { sources } = useIncomeSources()
 
-  const month = useMemo(() => monthTotals(transactions, monthKey), [transactions, monthKey])
+  const prevKey = useMemo(() => shiftMonth(monthKey, -1), [monthKey])
   const allTime = useMemo(() => allTimeTotals(transactions), [transactions])
+  const insights = useMemo(
+    () => monthInsights(transactions, monthKey, prevKey),
+    [transactions, monthKey, prevKey],
+  )
   const series = useMemo(() => cashflowSeries(transactions, 6), [transactions])
+  const expectedIncome = useMemo(() => projectedIncome(sources, monthKey), [sources, monthKey])
+
+  /* The 12-month trail. The window is pinned to today rather than to the
+   * selected month, so tapping a card highlights it instead of shuffling every
+   * card sideways. The running balance opens from everything older than the
+   * window, so the first visible month already shows a true balance. */
+  const historyRows = useMemo(() => {
+    const rows = monthHistory(transactions, HISTORY_MONTHS, thisMonthKey())
+    if (!rows.length) return []
+    return withRunningBalance(rows, balanceBefore(transactions, rows[0].key))
+  }, [transactions])
 
   const expenseByCategory = useMemo(
     () => categoryAgg(transactions, 'expense', monthKey),
     [transactions, monthKey],
   )
+
   const donutData = useMemo(
     () =>
       Object.entries(expenseByCategory)
@@ -53,7 +87,13 @@ export default function Dashboard({ transactions, loading, openAdd, openEdit, se
     [transactions],
   )
 
-  const savingsRate = month.income > 0 ? percent((month.net / month.income) * 100) : null
+  // Average daily spend uses the days *so far* in the current month, so the
+  // figure isn't dragged down by days that haven't happened yet.
+  const daysInView = monthKey === thisMonthKey() ? new Date().getDate() : daysInMonth(monthKey)
+  const averageDaily = daysInView > 0 ? insights.expense / daysInView : 0
+  const biggest = insights.largestExpense
+  const biggestCategory = biggest ? getCategory('expense', biggest.category) : null
+
   const firstName = (user?.displayName || '').split(' ')[0]
   const hasAny = transactions.length > 0
 
@@ -95,16 +135,102 @@ export default function Dashboard({ transactions, loading, openAdd, openEdit, se
         </div>
       )}
 
-      {/* Stat cards */}
+      {/* The one number that matters — banking-style hero */}
+      <BalanceHero
+        balance={allTime.net}
+        income={insights.income}
+        expense={insights.expense}
+        expected={expectedIncome}
+        currency={currency}
+        label="Total balance"
+        periodLabel={`${formatMonthKey(monthKey)} · ${insights.entries} ${
+          insights.entries === 1 ? 'entry' : 'entries'
+        }`}
+        savingsRate={insights.savingsRate}
+        hidden={hidden}
+        onToggleHidden={toggle}
+        footer={
+          <p className="mt-4 text-[11px] text-indigo-200/80">
+            {loading
+              ? 'Syncing with your Google account…'
+              : `Synced to ${user?.email || 'your Google account'}`}
+          </p>
+        }
+      />
+
+      <QuickActions
+        onAddExpense={() => openAdd('expense')}
+        onAddIncome={() => openAdd('income')}
+        setView={setView}
+      />
+
+      {/* Money trail + pay schedule */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="p-5 lg:col-span-2">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Money history</h2>
+              <p className="text-xs text-slate-400">
+                Last {HISTORY_MONTHS} months — tap a month to jump to it
+              </p>
+            </div>
+            <button
+              onClick={() => setView('history')}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 cursor-pointer"
+            >
+              Full history <ArrowRight size={14} />
+            </button>
+          </div>
+          {loading ? (
+            <div className="flex h-32 items-center justify-center">
+              <Spinner className="text-slate-300" size={26} />
+            </div>
+          ) : (
+            <HistoryStrip
+              rows={historyRows}
+              currency={currency}
+              selectedKey={monthKey}
+              onSelect={setMonthKey}
+              hidden={hidden}
+            />
+          )}
+        </Card>
+
+        <PaydayCard
+          sources={sources}
+          monthKey={monthKey}
+          received={insights.income}
+          currency={currency}
+          hidden={hidden}
+          setView={setView}
+        />
+      </div>
+
+      {/* This month, in four numbers */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Income" tone="income" value={formatMoney(month.income, currency)} />
-        <StatCard label="Expenses" tone="expense" value={formatMoney(month.expense, currency)} />
-        <StatCard label="Net saved" tone="net" value={formatMoney(month.net, currency)} />
         <StatCard
           label="Savings rate"
           tone="saved"
-          value={savingsRate === null ? '—' : `${savingsRate}%`}
-          sub={savingsRate !== null ? 'of income this month' : undefined}
+          value={insights.savingsRate === null ? '—' : `${insights.savingsRate}%`}
+          sub={insights.savingsRate === null ? 'no income logged yet' : 'of income kept'}
+        />
+        <StatCard
+          label="Avg. daily spend"
+          tone="expense"
+          value={formatMoney(averageDaily, currency)}
+          sub={`over ${daysInView} ${daysInView === 1 ? 'day' : 'days'}`}
+        />
+        <StatCard
+          label="Biggest expense"
+          tone="expense"
+          value={biggest ? formatMoney(biggest.amount, currency) : '—'}
+          sub={biggestCategory ? `${biggestCategory.emoji} ${biggestCategory.label}` : 'nothing yet'}
+        />
+        <StatCard
+          label="Spending trend"
+          tone={insights.expenseChange > 0 ? 'expense' : 'income'}
+          value={signedPercent(insights.expenseChange)}
+          sub="vs last month"
         />
       </div>
 
