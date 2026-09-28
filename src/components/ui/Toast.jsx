@@ -29,14 +29,20 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={toast}>
       {children}
-      <div className="fixed bottom-24 left-1/2 z-[60] flex w-full max-w-sm -translate-x-1/2 flex-col gap-2 px-4 sm:bottom-6">
+      {/* Sits above the phone's bottom nav (and its home indicator); on desktop
+       * there is no nav, so it drops to the normal corner offset. The wrapper
+       * ignores pointer events so it never blocks a tap underneath. */}
+      <div
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-col items-center gap-2 px-4
+          pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))] lg:pb-6"
+      >
         {toasts.map((t) => {
           const s = STYLES[t.type]
           return (
             <div
               key={t.id}
               role="status"
-              className={`flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-lg ring-1 ${s.ring} animate-[slideUp_.2s_ease]`}
+              className={`pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-lg ring-1 ${s.ring} animate-[slideUp_.2s_ease]`}
             >
               <span className={s.accent}>{s.icon}</span>
               <p className="flex-1 text-sm font-medium text-slate-700">{t.message}</p>

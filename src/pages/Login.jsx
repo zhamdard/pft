@@ -353,22 +353,23 @@ export default function Login() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-slate-50 px-4 py-10">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[40rem] -translate-x-1/2 rounded-full bg-indigo-200/40 blur-3xl"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 right-0 h-72 w-72 rounded-full bg-sky-200/30 blur-3xl"
-      />
+    <div className="relative flex min-h-dvh flex-col items-center justify-center bg-slate-50 px-4 py-10">
+      {/* The decorative blobs are wider than a phone screen, so they live inside
+       * their own clipping layer. `overflow-hidden` used to sit on the page
+       * itself, which also clipped the *top* of tall content on small screens
+       * and made it impossible to scroll to — and the help panel is taller than
+       * an iPhone SE. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 h-96 w-[40rem] -translate-x-1/2 rounded-full bg-indigo-200/40 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-sky-200/30 blur-3xl" />
+      </div>
 
       <div className="relative w-full max-w-md">
         <div className="flex justify-center">
           <Brand />
         </div>
 
-        <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-7 shadow-xl shadow-slate-200/60 sm:p-8">
+        <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/60 sm:p-8">
           {showHelp ? (
             <HelpPanel
               checks={checks}

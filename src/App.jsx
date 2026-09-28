@@ -7,10 +7,10 @@ import { Brand } from './components/layout/Brand'
 import DataHealthBanner from './components/DataHealthBanner'
 import Sidebar from './components/layout/Sidebar'
 import MobileNav from './components/layout/MobileNav'
+import MoreSheet from './components/layout/MoreSheet'
 import { TopBar } from './components/layout/TopBar'
-import FloatingAdd from './components/FloatingAdd'
 import TransactionForm from './components/TransactionForm'
-import { DEFAULT_VIEW } from './components/layout/appNav'
+import { DEFAULT_VIEW, MORE_NAV_ITEMS } from './components/layout/appNav'
 import { useTransactions } from './hooks/useTransactions'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -42,7 +42,7 @@ function PageLoading() {
 
 function Splash() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-slate-50">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-slate-50">
       <Brand />
       <Spinner className="text-indigo-600" size={30} />
     </div>
@@ -53,6 +53,7 @@ function Shell() {
   const { user } = useUser()
   const [view, setView] = useState(DEFAULT_VIEW)
   const [form, setForm] = useState(null)
+  const [menuOpen, setMenuOpen] = useState(false)
   const { transactions, loading } = useTransactions(user?.uid)
 
   const openAdd = (type = 'expense') => setForm({ mode: 'create', defaultType: type, tx: null })
@@ -60,12 +61,15 @@ function Shell() {
   const closeForm = () => setForm(null)
 
   return (
-    <div className="min-h-screen lg:pl-64">
+    /* min-h-dvh, not min-h-screen: 100vh is wrong on iOS Safari while the URL
+     * bar is expanded, which is what makes layouts jump and clip. */
+    <div className="min-h-dvh lg:pl-64">
       <Sidebar view={view} setView={setView} />
 
-      <div className="pb-24 lg:pb-10">
-        <TopBar view={view} />
-        <main className="mx-auto max-w-6xl px-4 py-6 lg:px-8">
+      {/* pb-nav clears the fixed bottom bar plus the home indicator on phones. */}
+      <div className="pb-nav lg:pb-10">
+        <TopBar view={view} onMenu={() => setMenuOpen(true)} />
+        <main className="mx-auto max-w-6xl px-4 py-5 lg:px-8 lg:py-6">
           <DataHealthBanner onOpenSettings={() => setView('settings')} />
 
           {/* Eager: the landing screen, so the first paint is instant. */}
@@ -101,9 +105,13 @@ function Shell() {
       </div>
 
       <MobileNav view={view} setView={setView} onAdd={openAdd} />
-      {(view === 'dashboard' || view === 'transactions') && (
-        <FloatingAdd onClick={() => openAdd('expense')} />
-      )}
+      <MoreSheet
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        view={view}
+        setView={setView}
+        items={MORE_NAV_ITEMS}
+      />
 
       <TransactionForm state={form} onClose={closeForm} />
     </div>

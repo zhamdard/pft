@@ -57,9 +57,13 @@ function formatDayTotal(items, currency) {
 
 function SummaryChip({ label, value, cls }) {
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm shadow-slate-200/50 sm:p-4">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">{label}</p>
-      <p className={`tabular mt-1 truncate text-base font-bold sm:text-lg ${cls}`}>{value}</p>
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-sm shadow-slate-200/50 sm:p-4">
+      <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400 sm:text-[11px]">
+        {label}
+      </p>
+      <p className={`tabular mt-1 truncate text-[15px] font-bold leading-tight sm:text-lg ${cls}`}>
+        {value}
+      </p>
     </div>
   )
 }
@@ -140,7 +144,7 @@ export default function Transactions({ transactions, openAdd, openEdit }) {
       </div>
 
       {/* Month summary */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <SummaryChip label="Income" value={formatMoney(monthTotal.inc, currency)} cls="text-emerald-600" />
         <SummaryChip label="Expenses" value={formatMoney(monthTotal.exp, currency)} cls="text-rose-600" />
         <SummaryChip label="Net" value={formatMoney(monthTotal.net, currency)} cls="text-slate-800" />
@@ -168,7 +172,7 @@ export default function Transactions({ transactions, openAdd, openEdit }) {
             </Select>
           </div>
         </div>
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Segmented
             value={typeFilter}
             onChange={setTypeFilter}

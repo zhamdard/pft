@@ -142,8 +142,15 @@ the new device → **Data studio → Import → Replace**. Nothing is ever locke
 - **Hide amounts** (see the dashboard section) persists to your account.
 - **Light, uncluttered design**: one accent colour, tabular numerals so figures line up, and
   reduced-motion support for anyone who needs it.
-- **Mobile-first layout**: sidebar on desktop; on a phone you get a bottom tab bar inside the
-  thumb zone, a floating **+** for quick entry, and installable "Add to Home Screen" behaviour.
+- **Mobile-first layout**: sidebar on desktop; on a phone you get a 4-tab bar inside the thumb zone
+  with the **+** raised in the middle for quick entry, and the less-used sections (Budgets, Data
+  studio, Settings) one tap away in the menu. Four tabs rather than seven keeps every target above
+  the 44 px minimum Apple recommends — seven across a phone gives each only ~47 px and you start
+  mis-tapping.
+- **Built for iOS specifically**: installable "Add to Home Screen" behaviour with real PNG icons,
+  notch and home-indicator safe areas respected, correct dynamic viewport height (`dvh`) so the
+  layout doesn't hide behind Safari's address bar, and a 16 px minimum on inputs so tapping a field
+  never leaves the page zoomed in.
 
 ---
 

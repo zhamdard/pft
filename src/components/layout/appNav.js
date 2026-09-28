@@ -26,10 +26,22 @@ export const NAV_ITEMS = [
 ]
 
 /**
- * The four tabs kept in the mobile bottom bar. Everything else lives under
- * "More" — seven icons in a bottom bar on a phone is a mis-tap generator.
+ * The four tabs kept in the mobile bottom bar, in thumb order.
+ *
+ * Seven destinations in a phone-width bar means each one is ~47px wide, which
+ * is below the 44px minimum tap target once padding is taken into account — and
+ * labels like "Data studio" wrap. Four tabs plus the raised add button is the
+ * layout the money apps use, and the rest stay one tap away in the header menu.
  */
 export const MOBILE_NAV_KEYS = ['dashboard', 'transactions', 'history', 'earnings']
+
+/** Those four, resolved to their icon + label. */
+export const MOBILE_TABS = MOBILE_NAV_KEYS.map((key) => NAV_ITEMS.find((n) => n.key === key)).filter(
+  Boolean,
+)
+
+/** Everything not in the bottom bar — shown in the mobile header menu. */
+export const MORE_NAV_ITEMS = NAV_ITEMS.filter((n) => !MOBILE_NAV_KEYS.includes(n.key))
 
 export const DEFAULT_VIEW = 'dashboard'
 

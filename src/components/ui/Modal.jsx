@@ -22,32 +22,38 @@ export default function Modal({ open, onClose, title, children, footer, size = '
   const widths = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-stretch justify-center sm:items-center sm:p-4">
       <div
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
+      {/* Phones get a full-screen sheet: the soft keyboard can't cover a
+       * full-height panel the way it covers a short centred dialog, and the
+       * footer buttons stay reachable. From `sm` up it becomes a dialog again. */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`relative w-full ${widths[size]} max-h-[92vh] overflow-hidden rounded-t-2xl sm:rounded-2xl
-          bg-white shadow-2xl flex flex-col`}
+        className={`relative flex w-full flex-col bg-white shadow-2xl
+          h-dvh rounded-none sm:h-auto sm:max-h-[90dvh] sm:rounded-2xl ${widths[size]}`}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+        <div className="safe-top flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-5 sm:py-4">
           <h2 className="text-base font-semibold text-slate-900">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
+            className="-mr-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-400
+              transition active:bg-slate-100 cursor-pointer"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
-        <div className="overflow-y-auto px-5 py-5">{children}</div>
+
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-5">{children}</div>
+
         {footer ? (
-          <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-5 py-4">
+          <div className="safe-bottom flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-slate-100 px-4 py-3 sm:px-5 sm:py-4">
             {footer}
           </div>
         ) : null}

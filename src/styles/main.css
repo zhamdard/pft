@@ -6,11 +6,55 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Stops iOS rubber-banding the page behind the fixed bottom nav. */
+  overscroll-behavior-y: none;
 }
 
 body {
   @apply bg-slate-50 text-slate-800 antialiased;
   font-family: var(--font-sans);
+  /* dvh, not vh: iOS Safari's collapsing URL bar makes 100vh lie, which is
+   * what makes full-height layouts jump or clip. dvh is the real viewport. */
+  min-height: 100dvh;
+  /* Without this iOS flashes a grey box over every tap. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * iOS Safari zooms the page in when a field smaller than 16px gains focus, and
+ * it does not zoom back out — the app is left looking broken. Forcing 16px on
+ * phone-sized fields is the only reliable fix, and is what iOS-first web apps
+ * do. Buttons are deliberately excluded: they never trigger the zoom, and
+ * forcing them to 16px would wreck every compact text button.
+ */
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}
+
+/* Notch / home-indicator aware spacing, used by the nav bar, sheets and modals. */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Room for the fixed bottom nav, including whatever the home indicator needs. */
+.pb-nav {
+  padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Horizontal scroll strips (history, category pickers) without a scrollbar. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Tabular numerals so money amounts align neatly */

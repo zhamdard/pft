@@ -12,6 +12,7 @@ import { describeAuthError } from '../src/utils/authErrors.js'
 import { describeFirestoreError, summariseError } from '../src/utils/firestoreErrors.js'
 import { monthInsights } from '../src/utils/stats.js'
 import { balanceBefore, monthHistory, withRunningBalance } from '../src/utils/history.js'
+import { NAV_ITEMS, MOBILE_TABS, MORE_NAV_ITEMS } from '../src/components/layout/appNav.js'
 
 /* ------------------------------------------------------------------ */
 /* Sorting — must equal what the old Firestore double-orderBy did      */
@@ -239,4 +240,35 @@ test('monthHistory describes each month of the window', () => {
   // Oldest month first, and months with no activity are still present.
   assert.equal(rows[0].key, '2025-04')
   assert.equal(rows[0].entries, 0)
+})
+
+/* ------------------------------------------------------------------ */
+/* Navigation — the phone layout must not lose a destination           */
+/* ------------------------------------------------------------------ */
+
+test('the phone tab bar and the menu together cover every destination', () => {
+  const reachable = [...MOBILE_TABS, ...MORE_NAV_ITEMS].map((i) => i.key)
+  assert.deepEqual(
+    [...reachable].sort(),
+    NAV_ITEMS.map((i) => i.key).sort(),
+    'a section is unreachable on a phone',
+  )
+  assert.equal(new Set(reachable).size, reachable.length, 'a section is listed twice')
+})
+
+test('the phone tab bar stays at four tabs so targets stay tappable', () => {
+  // Seven tabs across a 375px screen is ~47px each — under the 44px minimum.
+  assert.equal(MOBILE_TABS.length, 4)
+})
+
+test('each nav entry carries the icon and label the shells render', () => {
+  for (const item of NAV_ITEMS) {
+    assert.equal(typeof item.key, 'string', 'key must be a string')
+    assert.ok(item.label, `missing label for ${item.key}`)
+    assert.ok(item.icon, `missing icon for ${item.key}`)
+  }
+})
+
+test('settings is reachable from the phone menu', () => {
+  assert.ok(MORE_NAV_ITEMS.some((i) => i.key === 'settings'))
 })
