@@ -444,6 +444,8 @@ export default function Earnings({ transactions = [], loading = false }) {
   const remaining = Math.max(0, projected - totals.income)
   const openPaydays = paydays.filter((p) => !isLogged(p))
   const editingSource = editing?.source || null
+  /* The source the remove-confirmation is about — the dialog names it. */
+  const confirmTarget = sources.find((s) => s.id === confirmId) || null
 
   return (
     <>
@@ -545,7 +547,7 @@ export default function Earnings({ transactions = [], loading = false }) {
         <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-sm font-semibold text-slate-800">Scheduled paydays</h2>
-            <MonthSwitch value={monthKey} onChange={setMonthKey} />
+            <MonthSwitch monthKey={monthKey} onChange={setMonthKey} />
           </div>
 
           {busy && !paydays.length ? (
@@ -603,7 +605,7 @@ export default function Earnings({ transactions = [], loading = false }) {
             <div className="grid gap-3 sm:grid-cols-2">
               {sources.map((source) => {
                 const payCount = paymentsInMonth(source, monthKey)
-                const share = projected > 0 ? percent(monthlyProjection(source), projected) : 0
+                const share = projected > 0 ? percent(monthlyProjection(source, monthKey), projected) : 0
                 return (
                   <Card
                     key={source.id}
@@ -630,7 +632,7 @@ export default function Earnings({ transactions = [], loading = false }) {
                           {hideAmounts ? '••••••' : amountText(source, currency)}
                         </p>
                         <p className="mt-0.5 text-xs text-slate-500">
-                          {payCount} payment{payCount === 1 ? '' : 's'} in {monthLabel}
+                          {payCount.length} payment{payCount.length === 1 ? '' : 's'} in {monthLabel}
                           {share > 0 && ` · ${share}% of expected`}
                         </p>
                       </div>
@@ -708,13 +710,15 @@ export default function Earnings({ transactions = [], loading = false }) {
           <SourceForm
             initial={editing.source}
             currency={currency}
-            onCancel={() => setEditing(null)}
+            onClose={() => setEditing(null)}
             onSave={saveSource}
           />
         )}
 
+        {/* `confirmId` holds the id of the source being removed; resolve it so the
+         * dialog can name what is about to be deleted. */}
         <ConfirmDialog
-          open={!!confirmTarget}
+          open={Boolean(confirmId)}
           title="Remove this pay source?"
           description={
             confirmTarget
@@ -723,8 +727,8 @@ export default function Earnings({ transactions = [], loading = false }) {
           }
           confirmLabel="Remove"
           tone="danger"
-          onCancel={() => setConfirmId(null)}
-          onConfirm={removeSource}
+          onCancel={() => setConfirmId('')}
+          onConfirm={() => deleteSource(confirmId)}
         />
       </div>
     </>

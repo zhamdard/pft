@@ -11,6 +11,7 @@
     "preview": "vite preview --port 4173",
     "test": "node --test \"tests/**/*.test.js\"",
     "test:render": "node tests/render/run.mjs",
+    "audit:ui": "node tests/visual/audit.mjs",
     "verify": "npm test && npm run test:render && npm run build",
     "icons": "node scripts/make-icons.cjs",
     "deploy": "npm run build && firebase deploy --only hosting",
