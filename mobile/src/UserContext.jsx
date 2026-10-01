@@ -25,7 +25,7 @@ import {
   signOut,
   serverTimestamp,
 } from '../../src/firebase/firebase'
-import { useDataHealth } from '../../src/context/DataHealthContext'
+import { useDataHealth } from './DataHealthContext'
 
 // Completes the auth browser round-trip when the app is reopened via callback.
 WebBrowser.maybeCompleteAuthSession()

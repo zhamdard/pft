@@ -49,6 +49,29 @@ Firebase via `signInWithCredential`. It reads and writes the same
 `users/{uid}/settings/prefs` document, so your currency and preferences follow
 you between web and phone.
 
+## What is shared, and the one hard rule
+
+Platform-neutral logic is shared; React-bound glue is not:
+
+| Shared (imported from `../src`) | Per-app (`mobile/src`) |
+|---|---|
+| `utils/` — money, dates, stats, earnings, history, sorting | `UserContext.jsx` — auth is different in native |
+| `services/` — Firestore reads and writes | `DataHealthContext.jsx`, `hooks.js` |
+| `data/categories.js`, `firebase/config.js` | `ui.js`, `theme.js`, `nav.js`, all screens |
+
+**No file under `../src` that imports `react` may appear in this app's graph.**
+The web app has React 19.3.0 in the root `node_modules`; this app has
+19.2.3. Two copies of React means the renderer's dispatcher is null, every
+hook call throws `Invalid hook call`, and the screen goes blank — which is
+exactly what happened, and how it was found.
+
+This is why `metro.config.js` does **not** set `disableHierarchicalLookup`.
+It looks like the tidy fix, but it also stops Metro walking into nested
+packages, and `expo-asset` only exists at `expo/node_modules/expo-asset` —
+turning it on fails the bundle outright with `Unable to resolve "expo-asset"`.
+
+If you add a shared file that needs `react`, put it in `mobile/src/` instead.
+
 ## Google sign-in setup
 
 Client IDs are per-platform in Google's console, so this must be filled in
@@ -82,14 +105,22 @@ Nothing in the source is Android-specific.
 
 ## Status
 
+Verified end-to-end on the `Pixel_9_Pro` emulator: `npx expo run:android`
+built a 45.2 MB debug APK in 23m, installed it, and Login, Dashboard and
+Transactions all render and respond to taps.
+
 | | |
 |---|---|
-| ✅ | Metro + shared logic layer, verified by a successful Android bundle |
+| ✅ | Metro + shared logic layer — Android bundle and native APK both build |
 | ✅ | Design primitives (theme, buttons, cards, pills, empty states) |
-| ✅ | Login, Dashboard, Transactions |
+| ✅ | Login, Dashboard, Transactions — rendered and tapped on the emulator |
 | ✅ | Four-tab bar, raised add button, overflow sheet, Android back handling |
+| ✅ | Missing-OAuth-config path shows an actionable message, not a dead button |
 | ⬜ | Add/edit transaction form |
 | ⬜ | History, Pay & income, Budgets, Data studio, Settings screens |
 | ⬜ | Charts (Recharts is DOM-only — needs `react-native-svg`) |
 | ⬜ | Excel/CSV import & export (`expo-file-system` + `expo-sharing`) |
+| ⬜ | iOS build (needs macOS/Xcode or cloud CI) |
 | ⬜ | Store submission |
+
+Screens that are not ported yet render an explicit "Coming next" card.

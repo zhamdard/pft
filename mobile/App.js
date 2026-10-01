@@ -3,7 +3,7 @@ import { BackHandler, Modal, Pressable, StyleSheet, Text, View } from 'react-nat
 import { StatusBar } from 'expo-status-bar'
 import { Ionicons } from '@expo/vector-icons'
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
-import { DataHealthProvider } from '../src/context/DataHealthContext'
+import { DataHealthProvider } from './src/DataHealthContext'
 import { UserProvider, useUser } from './src/UserContext'
 import { MOBILE_TABS, MORE_NAV_ITEMS, tabColor } from './src/nav'
 import { colors, shadow, spacing, type } from './src/theme'

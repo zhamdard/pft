@@ -1,16 +1,23 @@
 /**
  * Metro config for the PFT native app.
  *
- * The point of this file is one line: `watchFolders`. The shared logic layer
+ * `watchFolders` is the reason this works at all: the shared logic layer
  * (money, dates, stats, earnings, history, Firestore services) lives in the
- * web app's `src/` so both apps run the same code and the same 27 unit tests.
- * Metro only watches the project root by default, so without this it cannot
- * even see those files.
+ * web app's `src/`, and Metro only watches its own project root by default —
+ * without this it cannot even see those files.
  *
- * `nodeModulesPaths` pins bare imports (react, firebase, …) to THIS app's
- * node_modules. The repo root has its own copy for the web build — React
- * 19.3 vs React 19.2.3 — and letting Metro wander up would resolve the wrong
- * one and hand React two different copies.
+ * `nodeModulesPaths` adds this app's node_modules as a search location.
+ *
+ * It deliberately does NOT set `disableHierarchicalLookup`. That flag looks
+ * like the tidy fix for "shared code resolves the web app's React", but it
+ * also stops Metro walking into nested packages — `expo-asset` lives at
+ * `expo/node_modules/expo-asset`, and disabling the walk makes the bundle
+ * fail outright with `Unable to resolve "expo-asset"`.
+ *
+ * The duplicate-React hazard is handled at the boundary instead: no module
+ * under `../src` that imports `react` is in this app's graph. Hooks and
+ * context are React-bound UI glue and live in `mobile/src/`; everything
+ * platform-neutral stays shared. See mobile/README.md.
  */
 const { getDefaultConfig } = require('expo/metro-config')
 const path = require('path')
