@@ -75,15 +75,31 @@ function circle(c, scale, col, cx, cy, r) {
  * favicon.svg, simplified so it still reads at 60px on a home screen.
  * Full bleed (no transparency) also means iOS's rounded-corner mask has no
  * black corners to show.
+ *
+ * `mark` scales the wallet around the tile centre: 1 fills the tile (used for
+ * the regular icons), ~0.68 keeps it inside the maskable safe zone so Android
+ * adaptive-icon masks never clip the clasp or corners.
  */
-function drawIcon(size) {
+function drawIcon(size, mark = 1, centerY = 90) {
   const scale = (size / 180) * SS
   const c = makeCanvas(size * SS)
 
+  const fit = (rx, ry, w, h, r) => {
+    const cx = rx + w / 2
+    const cy = ry + h / 2
+    // Vertical pivot is 101 (the wallet body's own centre), not the tile
+    // centre: scaling the 11-unit gap between them keeps the stroke visually
+    // centred, and only the smaller ominous gap scales with the mark.
+    const w2 = w * mark
+    const h2 = h * mark
+    return [90 + (cx - 90) * mark - w2 / 2, centerY + (cy - 101) * mark - h2 / 2, w2, h2, r * mark]
+  }
+
   roundedRect(c, scale, INDIGO, 0, 0, 180, 180, 0) // background
-  roundedRect(c, scale, WHITE, 38, 64, 104, 74, 18) // wallet body (outer)
-  roundedRect(c, scale, INDIGO, 47, 73, 86, 56, 11) // hollow it into an outline
-  circle(c, scale, WHITE, 110, 101, 8) // clasp
+  roundedRect(c, scale, WHITE, ...fit(38, 64, 104, 74, 18)) // wallet body (outer)
+  roundedRect(c, scale, INDIGO, ...fit(47, 73, 86, 56, 11)) // hollow it into an outline
+  const [ccx, ccy] = [90 + (110 - 90) * mark, centerY + (101 - 101) * mark]
+  circle(c, scale, WHITE, ccx, ccy, 8 * mark) // clasp
 
   /* Box-downsample SS x SS -> 1, which is what makes the curves smooth. */
   const out = Buffer.alloc(size * size * 4)
@@ -168,13 +184,18 @@ function encodePng(rgba, size) {
 /* --- write them out ---------------------------------------------------- */
 
 const targets = [
-  ['apple-touch-icon.png', 180],
-  ['icon-192.png', 192],
-  ['icon-512.png', 512],
+  ['apple-touch-icon.png', 180, 1],
+  ['icon-192.png', 192, 1],
+  ['icon-512.png', 512, 1],
+  // Maskable icon: inset mark so OEM-shaped masks can't clip it.
+  // Sized from drawIcon's own pixel measurements, not by eyeballing: a
+  // mark of 0.68 with the centre left at 92 keeps clear space around the
+  // wallet in the worst case (maskable-minimal shows a centred 66% crop).
+  ['icon-maskable-512.png', 512, 0.68],
 ]
 
-for (const [name, size] of targets) {
-  const png = encodePng(drawIcon(size), size)
+for (const [name, size, mark] of targets) {
+  const png = encodePng(drawIcon(size, mark), size)
   fs.writeFileSync(path.join(OUT_DIR, name), png)
   console.log(`${name.padEnd(22)} ${size}x${size}  ${png.length} bytes`)
 }
